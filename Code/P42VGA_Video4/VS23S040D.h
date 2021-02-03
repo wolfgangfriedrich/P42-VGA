@@ -9,14 +9,15 @@
 #define VS23S040D_h
 
 // *** Select Video Resolution here ***
-#define NTSC320x200
-//#define PAL300x240
+//#define NTSC320x200
+#define PAL300x240
 
-// *** Uncomment this line if target system is an Arduino MEGA ***
-//#define MEGA
+// *** Select Platform here ***
+#define ArduinoShield
+//#define FeatherWing		// use FeatherWing for Breadboard
 
 // *** Uncomment this line to get extra debug information on the serial interface ***
-#define SERIAL_DEBUG
+//#define SERIAL_DEBUG
 
 #ifdef NTSC320x200
 	#include "ntsc320x200.h"
@@ -28,10 +29,22 @@
 #define u_int32 unsigned long
 #define u_int16 unsigned int
 
+#ifdef ArduinoShield
+  // Arduino Uno
 const int slaveSelectPin	= 10;
 const int MemSelectPin		=  9;
 const int nHOLDPin			=  8;
 const int nWPPin			=  7;
+#endif
+
+#ifdef FeatherWing
+  // Feather
+const int slaveSelectPin	= 11;
+const int MemSelectPin		= 10;
+const int nHOLDPin			=  9;
+const int nWPPin			=  6;
+#endif
+
 
 // Command definitions incl read / write designation
 

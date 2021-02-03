@@ -204,20 +204,25 @@ word P42Display::Config( byte channel )
 	u_int32 i,j = 0;
 
 	// test the 4 chip memory instances
-	SPIWriteWord (channel, 0, 0xcafe, true);
-	result = SPIReadWord (channel, 0, true);
-	Serial.println(result,HEX);
+	Serial.print(channel);
+	Serial.print(": ");
+	SPIWriteWord (channel, 0, 0xcafe, false);
+	result = SPIReadWord (channel, 0, false);
+	Serial.print(result,HEX);
+	Serial.print(" ");
 
-	SPIWriteWord (channel, 1, 0xbad0, true);
-	result = SPIReadWord (channel, 1, true);
-	Serial.println(result,HEX);
+	SPIWriteWord (channel, 1, 0xbad0, false);
+	result = SPIReadWord (channel, 1, false);
+	Serial.print(result,HEX);
+	Serial.print(" ");
 
-	SPIWriteWord (channel, 2, 0xbeef, true);
-	result = SPIReadWord (channel, 2, true);
-	Serial.println(result,HEX);
+	SPIWriteWord (channel, 2, 0xbeef, false);
+	result = SPIReadWord (channel, 2, false);
+	Serial.print(result,HEX);
+	Serial.print(" ");
 
-	SPIWriteWord (channel, 3, 0xaffe, true);
-	result = SPIReadWord (channel, 3, true);
+	SPIWriteWord (channel, 3, 0xaffe, false);
+	result = SPIReadWord (channel, 3, false);
 	Serial.println(result,HEX);
 
 	
@@ -244,8 +249,8 @@ word P42Display::Config( byte channel )
 #endif
 
 		// enable the channel(s) that are handed in.
-		SPIWriteRegister (WriteMultiICAccessControl, 0x0f ^ (1 << channel), true);
-		SPIReadRegister(ReadMultiICAccessControl, true);
+		SPIWriteRegister (WriteMultiICAccessControl, 0x0f ^ (1 << channel), false);
+		SPIReadRegister(ReadMultiICAccessControl, false);
 		// SPI mem address auto increment
 		SPIWriteRegister (WriteStatus, 0x40, false);
 		// left limit of visible picture

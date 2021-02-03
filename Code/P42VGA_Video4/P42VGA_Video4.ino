@@ -220,10 +220,10 @@ void loop() {
 	P42Display.PrintString ( CH0, "!\"#$%&\'()*+,-./0123456789:;<=>?@", 0, 0, 0x05);
 	P42Display.PrintString ( CH0, "ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`", 0, 16, 0x05);
 	P42Display.PrintString ( CH0, "abcdefghijklmnopqrstuvwxyz{|}~", 0, 32, 0x05);
-	P42Display.PrintString ( CH0, "CHANNEL 0",  0, 40, 0x05);
-	P42Display.PrintString ( CH1, "CHANNEL 1", 20, 40, 0x05);
-	P42Display.PrintString ( CH2, "CHANNEL 2", 40, 40, 0x05);
-	P42Display.PrintString ( CH3, "CHANNEL 3", 60, 40, 0x05);
+	P42Display.PrintString ( CH0, "CHANNEL 0",  0, 48, 0x05);
+	P42Display.PrintString ( CH1, "CHANNEL 1", 20, 48, 0x05);
+	P42Display.PrintString ( CH2, "CHANNEL 2", 40, 48, 0x05);
+	P42Display.PrintString ( CH3, "CHANNEL 3", 60, 48, 0x05);
 
 	// String output C-64 inspired start screen :-)
 	Serial.println("String [press key]");
@@ -235,17 +235,17 @@ void loop() {
 	P42Display.PrintString ( CH0, "16M FLASH SYSTEM A LOT OF BYTES FREE.", 8, 16, 0x54);
 	P42Display.PrintString ( CH0, "READY.", 0, 32, 0x53);
 
-	P42Display.ClearScreen ( CH1, 0x6c );
+	P42Display.ClearScreen ( CH1, 0x7c );
 	P42Display.PrintString ( CH1, "**** ARDUINO P42 VIDEO4 SHIELD ****", 8, 0, 0x65);
 	P42Display.PrintString ( CH1, "16M FLASH SYSTEM A LOT OF BYTES FREE.", 8, 16, 0x64);
 	P42Display.PrintString ( CH1, "READY.", 0, 32, 0x63);
 
-	P42Display.ClearScreen ( CH2, 0x7c );
+	P42Display.ClearScreen ( CH2, 0x8c );
 	P42Display.PrintString ( CH2, "**** ARDUINO P42 VIDEO4 SHIELD ****", 8, 0, 0x75);
 	P42Display.PrintString ( CH2, "16M FLASH SYSTEM A LOT OF BYTES FREE.", 8, 16, 0x74);
 	P42Display.PrintString ( CH2, "READY.", 0, 32, 0x73);
 
-	P42Display.ClearScreen ( CH3, 0x8c );
+	P42Display.ClearScreen ( CH3, 0xec );
 	P42Display.PrintString ( CH3, "**** ARDUINO P42 VIDEO4 SHIELD ****", 8, 0, 0x85);
 	P42Display.PrintString ( CH3, "16M FLASH SYSTEM A LOT OF BYTES FREE.", 8, 16, 0x84);
 	P42Display.PrintString ( CH3, "READY.", 0, 32, 0x83);
