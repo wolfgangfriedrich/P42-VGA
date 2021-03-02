@@ -68,7 +68,9 @@ SoftwareSerial Serial1(12, 13); // RX, TX
 
 P42Display P42Display; 
 
-#define Background 0x5c
+#define Background	0x58
+#define FG_Ser		0x5c
+#define FG_Ser1		0x33
 
 // global variables
 u_int16 ScreenX = 0;
@@ -207,19 +209,18 @@ void loop() {
 	char Ser_RX [33] = "Ser_RX";
 	char Ser1_RX[33] ="Hello World";
 	
-	P42Display.ClearScreen ( CH0, 0x00 );
-
 	P42Display.ClearScreen ( CH0, Background );
-	printlineXY ( CH0, " **** ARDUINO P42 VIDEO4 SHIELD ****", 0x55, true);
-	printlineXY ( CH0, "16M FLASH SYSTEM A LOT OF BYTES FREE.", 0x54, true);
-	printlineXY ( CH0, "CH0 READY.", 0x53, true);
+
+	printlineXY ( CH0, " **** ARDUINO P42 VIDEO4 SHIELD ****", FG_Ser, true);
+	printlineXY ( CH0, "16M FLASH SYSTEM A LOT OF BYTES FREE.", FG_Ser, true);
+	printlineXY ( CH0, "CH0 READY.", FG_Ser, true);
 
 	Serial.println(F("UART ping pong") );
 	
 	// testing
 	strcpy ( Ser_RX, "Blub");
-	printlineXY (CH0, Ser_RX, 0x53, true);
-	printlineXY (CH0, Ser1_RX, 0x58, true);
+	printlineXY (CH0, Ser_RX, FG_Ser, true);
+	printlineXY (CH0, Ser1_RX, FG_Ser1, true);
 	
 	// endless loop to display serial single characters from 2 serial ports
 	while (1){
@@ -227,13 +228,13 @@ void loop() {
 			Ser_RX[0] = Serial.read();
 			Ser_RX[1] = 0;
 			Serial1.print ( Ser_RX[0] );
-			printlineXY (CH0, &Ser_RX[0], 0x53, false);
+			printlineXY (CH0, &Ser_RX[0], FG_Ser, false);
 		}
 		if (Serial1.available()) {
 			Ser1_RX[0] = Serial1.read();
 			Ser1_RX[1] = 0;
 			Serial.print ( Ser1_RX[0] );
-			printlineXY (CH0, &Ser1_RX[0], 0x58, false);
+			printlineXY (CH0, &Ser1_RX[0], FG_Ser1, false);
 		}
 	}
 

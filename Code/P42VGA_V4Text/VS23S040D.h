@@ -9,8 +9,8 @@
 #define VS23S040D_h
 
 // *** Select Video Resolution here ***
-#define NTSC320x200
-//#define PAL300x240
+//#define NTSC320x200
+#define PAL300x240
 
 // *** Select Platform here ***
 #define ArduinoShield
