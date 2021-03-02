@@ -277,7 +277,7 @@
 #ifdef THE_TEST
 #define BLANK_LEVEL 0x003a
 #define BLACK_LEVEL 0x003a
-#define BURST_LEVEL 0xBB3a
+#define BURST_LEVEL 0xee3a
 
 #define WHITE_LEVEL 0x00FF
 #endif
