@@ -1,0 +1,38 @@
+// Demo Sketch for P42 VGA Shield
+//  Using Channel0 Composite Video Output
+//
+// The idea is to have messages from 2 serial ports being displayed and scrolled up.
+// I would call it semi-duplex, as ideally one side sends a command/line and the the other side.
+// If both sides send characters at the same time, they get mixed with each other in the same line.
+// Different colours for the 2 sides are used, so it is visible if that happens. 
+//
+// HW Setup:
+// Arduino Mega with P42 Video4 VGA Shield
+// Standard serial port setup as SERIAL 115200 8N1
+// 2nd serial port setup as SERIAL1 38400 8N1 (this is also a hardware serial port on the Mega on pins 18:TX 19:RX
+// The baudrate is set to 38400 to be operational with the Arduino SoftwareSerial library as well.
+// For the 2nd serial port a TTl-UART adapter is required with connections to RX, TX and GND. 
+// 
+// SW Setup:
+// !!! The Arduino Serial Monitor is not suitable for this setup.
+// A proper terminal software is required, I use two instances of TeraTerm, 
+// configured with the correct serial settings, local echo and transmit CR+LF.
+//
+// Description:
+// The global variables ScreenX and ScreenY as well as the function printlineXY() are the heart of this demo.
+//
+// ScreenX, ScreenY point to the coordinate of the screen where the next character will be printed.
+// Function: byte printlineXY ( byte channel, char* Text, byte colour, bool ln )
+//   Paramters:
+//   byte channel: is the video channel used for display; can be one of CH0, CH1, CH2, CH3.
+//   char* Text: pointer to a string, null terminated. To print a single character, the character + a NULL byte need to be content of the string.
+//               Maximum string length is the remainder of the current line + a full additional line as only one linebreak is currently implemented.
+//   byte colour: a 8-bit colour value picked from the colour table in the user guide.
+//   bool ln: of TRUE a CR+LF is performed to start a new line after the string got printed.
+//    byte return value: currently always 0.
+//
+//  At the bottom of the screen, if the last line is full or LF = TRUE, a line scrolling is implemented to make room for the next line of text. 
+//  Implemented control codes:
+//  0x08 : Backspace, the last character gets deleted to free the area for the next character to be printed, so technically it is a 'delete char'
+//  0x0A : LF Linefeed, cursor go to next line, but same horizontal position 
+//  0x0D : CR Carriage return, cursor goes to the beginning of the current line
