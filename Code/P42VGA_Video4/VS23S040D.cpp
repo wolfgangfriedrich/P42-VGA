@@ -845,7 +845,6 @@ void SPImemdump (unsigned long address, unsigned int bytes) {
 	}
     digitalWrite(MemSelectPin,HIGH); 
 	Serial.println("<");
-  
 
 }
 
@@ -855,7 +854,7 @@ void SPImemdump (unsigned long address, unsigned int bytes) {
 // Read Data from Flash, interpret as an BMP image and display at coordinates x,y
 // Supported BMP: 24bit colour depth
 // Non colour mapping yet
-void P42Display::DisplayBMPFromFlash ( u_int32 mem_location, u_int16 x, u_int16 y ) {
+void P42Display::DisplayBMPFromFlash ( byte channel, u_int32 mem_location, u_int16 x, u_int16 y ) {
 	
 	unsigned long counter = 0;
 	byte inbyte = 0;
@@ -871,10 +870,10 @@ void P42Display::DisplayBMPFromFlash ( u_int32 mem_location, u_int16 x, u_int16 
 	unsigned long ulongtemp = 0;		// 
 
 
-	SPImemdump (0, 16);
-	SPImemdump (0x1000, 64);
+//	SPImemdump (0, 16);
+//	SPImemdump (0x1000, 64);
 	
-	SPImemdump (mem_location + counter, 16);
+//	SPImemdump (mem_location + counter, 16);
 
 	while ( counter < FileSize ) {
 		
@@ -1004,7 +1003,7 @@ void P42Display::DisplayBMPFromFlash ( u_int32 mem_location, u_int16 x, u_int16 
 					digitalWrite(MemSelectPin,HIGH); 
 					
 					pixelvalue = (red>>6) + (green>>6) + (blue>>6);		// translate RGB into 12 value grey scale
-					SetYUVPixel ( 0,x + (counter-PixelOffset)%Width , y+Height - (counter-PixelOffset)/Width, pixelvalue+2); // shift 2 values up
+					SetYUVPixel ( channel, x + (counter-PixelOffset)%Width , y+Height - (counter-PixelOffset)/Width, pixelvalue+2); // shift 2 values up
 					
 					break;
 				}
@@ -1025,7 +1024,7 @@ void P42Display::DisplayBMPFromFlash ( u_int32 mem_location, u_int16 x, u_int16 
 						case 2:{
 							// red sub-pixel
 							pixelvalue = pixelvalue + (inbyte>>6);
-							SetYUVPixel ( 0, x + (counter-PixelOffset)%Width , y+Height - (counter-PixelOffset)/Width, pixelvalue+2); // shift 2 values up
+							SetYUVPixel ( channel, x + (counter-PixelOffset)%Width , y+Height - (counter-PixelOffset)/Width, pixelvalue+2); // shift 2 values up
 							break;
 						}
 						default: {

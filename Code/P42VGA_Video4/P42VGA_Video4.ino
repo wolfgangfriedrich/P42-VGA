@@ -130,11 +130,14 @@ void loop() {
 
 	}
 
-//	Serial.println(F("Display Image [press key]") );
-//	while (Serial.available() == 0) {};
-//	incomingByte = Serial.read();
-//	
-//	P42Display.DisplayBMPFromFlash ( 0x3000, 10, 10 );
+	Serial.println(F("Display Image [press key]") );
+	while (Serial.available() == 0) {};
+	incomingByte = Serial.read();
+	
+	P42Display.DisplayBMPFromFlash ( CH0, 0x3000, 10, 10 );
+	P42Display.DisplayBMPFromFlash ( CH1, 0x3000, 20, 20 );
+	P42Display.DisplayBMPFromFlash ( CH2, 0x3000, 30, 30 );
+	P42Display.DisplayBMPFromFlash ( CH3, 0x3000, 40, 40 );
 
 	Serial.println(F("Clear Screen [press key]"));
 	while (Serial.available() == 0) {};

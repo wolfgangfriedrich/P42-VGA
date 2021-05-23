@@ -9,8 +9,8 @@
 #define VS23S040D_h
 
 // *** Select Video Resolution here ***
-//#define NTSC320x200
-#define PAL300x240
+#define NTSC320x200
+//#define PAL300x240
 
 // *** Select Platform here ***
 #define ArduinoShield
@@ -150,7 +150,7 @@ class P42Display
 		
 		// Data copy
 		byte UARTDataToFlash ( u_int32 length, u_int32 mem_location);   // receive number of bytes on UART and write to Flash memory address
-		void DisplayBMPFromFlash ( u_int32 mem_location, u_int16 x, u_int16 y );	// 
+		void DisplayBMPFromFlash (byte channel, u_int32 mem_location, u_int16 x, u_int16 y );	// 
  	private:
 		void _protoline(byte channel, u_int16 line, u_int16 offset, u_int16 limit, u_int16 data);
 		void _printdebug (byte address, u_int32 value);
