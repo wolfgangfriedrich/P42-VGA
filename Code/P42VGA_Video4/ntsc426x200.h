@@ -19,7 +19,7 @@
 #define FRONT_PORCH_LINES 3
 // Width, in PLL clocks, of each pixel
 // Used 4 to 8 for 160x120 pics
-#define PLLCLKS_PER_PIXEL 4
+#define PLLCLKS_PER_PIXEL 3
 // Extra bytes can be added to end of picture lines to prevent pic-to-proto 
 // border artifacts. 8 is a good value. 0 can be tried to test, if there is 
 // no need for extra bytes.		
@@ -89,7 +89,7 @@
 #define STARTPIX (BLANKEND+16)
 // The last pixel of the picture area. Set PIXELS to wanted value and suitable 
 // ENDPIX value is calculated.
-#define XPIXELS 320
+#define XPIXELS 426
 #define ENDPIX ((u_int16)(STARTPIX+PLLCLKS_PER_PIXEL*XPIXELS/8))
 		
 // PLL frequency

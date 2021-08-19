@@ -11,10 +11,16 @@
 #ifdef NTSC320x200
 	#include "ntsc320x200.h"
 #endif
+#ifdef NTSC426x200
+	#include "ntsc426x200.h"
+#endif
 #ifdef PAL300x240
 	#include "pal300x240.h"
 	// To draw some patterns into protoline which will be visible in the frame of the image
 	//	#define PAL_PROTOLINE_DEBUG 1
+#endif
+#ifdef PAL500x240
+	#include "pal500x240.h"
 #endif
 
 #include "VS23S040D.h"
@@ -242,9 +248,19 @@ word P42Display::Config( byte channel )
 		Serial.println(F("Resolution: NTSC 320x200 8bit"));
 	#endif
 #endif
+#ifdef NTSC426x200 
+	#ifdef SERIAL_DEBUG
+		Serial.println(F("Resolution: NTSC 426x200 8bit"));
+	#endif
+#endif
 #ifdef PAL300x240 
 	#ifdef SERIAL_DEBUG
 		Serial.println(F("Resolution: PAL 300x240 8bit"));
+	#endif
+#endif
+#ifdef PAL500x240 
+	#ifdef SERIAL_DEBUG
+		Serial.println(F("Resolution: PAL 500x240 8bit"));
 	#endif
 #endif
 
@@ -340,7 +356,75 @@ word P42Display::Config( byte channel )
 		SPIWriteRegister16 (WriteVideoDisplayControl2, Enable_Video | NTSC | Program_Length | LineCount, false );
 #endif
 
-#ifdef PAL300x240
+#ifdef NTSC426x200 
+		// set all line indexes to point to protoline 0
+	#ifdef SERIAL_DEBUG
+		Serial.println(F("set line index to protoline 0"));
+	#endif
+		for ( i=0; i <= TOTAL_LINES-1; i++) {
+			SPIWriteByte (channel, INDEX_START_BYTES + i*3    , 0x00, false);
+			SPIWriteByte (channel, INDEX_START_BYTES + i*3 + 1, PROTOLINE_WORD_ADDRESS(0), false);
+			SPIWriteByte (channel, INDEX_START_BYTES + i*3 + 2, PROTOLINE_WORD_ADDRESS(0)>>8, false);
+		}
+		// Construct protoline 0
+	#ifdef SERIAL_DEBUG
+		Serial.println(F("Construct protoline 0"));
+	#endif
+		_protoline( channel, 0, 0, COLORCLKS_PER_LINE, BLANK_LEVEL);
+		_protoline( channel, 0, BLANKEND, FRPORCH, BLACK_LEVEL);	// Set the color level to black
+		_protoline( channel, 0, 0, SYNC, SYNC_LEVEL);				// Set HSYNC
+		_protoline( channel, 0, BURST, BURSTDUR, BURST_LEVEL);	// Set color burst
+
+		// Mitigate left edge artifact comes
+		// http://www.vsdsp-forum.com/phpbb/viewtopic.php?f=14&t=2206#p11698
+		SPIWriteWord (channel, PROTOLINE_WORD_ADDRESS(0) + 0x38, 0x000e, false);
+		
+		// Construct protoline 1. This is a short+short VSYNC line
+	#ifdef SERIAL_DEBUG
+		Serial.println(F("Construct protoline 1"));
+	#endif
+		_protoline( channel, 1, 0, COLORCLKS_PER_LINE, BLANK_LEVEL);
+		_protoline( channel, 1, 0, SHORTSYNC, SYNC_LEVEL);					// Short sync at the beginning of line
+		_protoline( channel, 1, COLORCLKS_LINE_HALF, SHORTSYNCM, SYNC_LEVEL);	// Short sync at the middle of line
+		
+		// Construct protoline 2. This is a long+long VSYNC line
+	#ifdef SERIAL_DEBUG
+		Serial.println(F("Construct protoline 2"));
+	#endif
+		_protoline( channel, 2, 0, COLORCLKS_PER_LINE, BLANK_LEVEL);
+		_protoline( channel, 2, 0, LONGSYNC, SYNC_LEVEL);						// Long sync at the beginning of line
+		_protoline( channel, 2, COLORCLKS_LINE_HALF, LONGSYNCM, SYNC_LEVEL);	// Long sync at the middle of line
+		// Now set first lines of frame to point to prototype lines
+	#ifdef SERIAL_DEBUG
+		Serial.println(F("1st lines point to protolines"));
+	#endif
+		for ( i=1; i <=9; i++) {
+			if (i>=4 and i<=6) {
+				SPIWriteByte (channel, INDEX_START_BYTES + i*3, 0x00, false);
+				SPIWriteByte (channel, INDEX_START_BYTES + i*3 + 1, PROTOLINE_WORD_ADDRESS(2), false);
+				SPIWriteByte (channel, INDEX_START_BYTES + i*3 + 2, PROTOLINE_WORD_ADDRESS(2)>>8, false);
+			}
+			else {
+				SPIWriteByte (channel, INDEX_START_BYTES + i*3, 0x00, false);
+				SPIWriteByte (channel, INDEX_START_BYTES + i*3 + 1, PROTOLINE_WORD_ADDRESS(1), false);
+				SPIWriteByte (channel, INDEX_START_BYTES + i*3 + 2, PROTOLINE_WORD_ADDRESS(1)>>8, false);
+			};
+		}
+		// Set pic line indexes to point to protoline 0 and their individual picture line.
+	#ifdef SERIAL_DEBUG
+		Serial.println(F("Pic line index to protoline 0"));
+	#endif
+		for (i=0; i<ENDLINE-STARTLINE; i++) { 
+			SPIWriteByte (channel, INDEX_START_BYTES + (i + STARTLINE)*3,     (PICLINE_BYTE_ADDRESS(i) << 7) & 0x80, false);
+			SPIWriteByte (channel, INDEX_START_BYTES + (i + STARTLINE)*3 + 1, (PICLINE_BYTE_ADDRESS(i) >> 1), false);
+			SPIWriteByte (channel, INDEX_START_BYTES + (i + STARTLINE)*3 + 2, (PICLINE_BYTE_ADDRESS(i) >> 9), false);
+		}
+		// Enable Video Display Controller, set video mode to NTSC, set program length and linecount.
+		SPIWriteRegister16 (WriteVideoDisplayControl2, Enable_Video | NTSC | Program_Length | LineCount, false );
+#endif
+
+#ifdef  PAL300x240 
+//#ifdef defined( PAL300x240 ) || defined( PAL500x240 )
 	word w = 0;
 
 		// Enable PAL Y lowpass filter
@@ -499,7 +583,137 @@ word P42Display::Config( byte channel )
 				}
 			}
 		}
-#endif
+#endif // PAL300x240 )
+
+#ifdef  PAL500x240 
+	word w = 0;
+
+		// Enable PAL Y lowpass filter
+		SPIWriteRegister40 (WriteBlockMoveControl1, 0x0000, 0x0000, BMVC_PYF, false );
+//		SPIWriteRegister40 (WriteBlockMoveControl1, 0x0000, 0x0000, BMVC_PYF | BMVC_DACC, false );
+		// set all line indexes to point to protoline 0
+	#ifdef SERIAL_DEBUG
+		Serial.println(F("set line index to protoline 0"));
+	#endif
+		for ( i=0; i < TOTAL_LINES; i++) {
+			SPIWriteByte (channel, INDEX_START_BYTES + i*3    , 0x00, false);
+			SPIWriteByte (channel, INDEX_START_BYTES + i*3 + 1, PROTOLINE_WORD_ADDRESS(0), false);
+			SPIWriteByte (channel, INDEX_START_BYTES + i*3 + 2, PROTOLINE_WORD_ADDRESS(0)>>8, false);
+		}
+		// Construct protoline 0
+	#ifdef SERIAL_DEBUG
+		Serial.println(F("Construct protoline 0"));
+	#endif
+		w = PROTOLINE_WORD_ADDRESS(0); // Could be w=0 because proto 0 always starts at address 0
+		for (i=0; i<=COLORCLKS_PER_LINE; i++) {
+			SPIWriteWord (channel, (u_int16)w++, BLANK_LEVEL, false);
+		}
+		// Set HSYNC
+		w = PROTOLINE_WORD_ADDRESS(0);
+		for (i=0; i<SYNC; i++) SPIWriteWord (channel, (u_int16)w++,SYNC_LEVEL, false);
+		// Set color burst
+		w = PROTOLINE_WORD_ADDRESS(0)+BURST;
+		for (i=0; i<BURSTDUR; i++) SPIWriteWord (channel, (u_int16)w++,BURST_LEVEL, false);
+		// Mitigate left edge artifact comes
+		// http://www.vsdsp-forum.com/phpbb/viewtopic.php?f=14&t=2206#p11698
+		SPIWriteWord (channel, PROTOLINE_WORD_ADDRESS(0) + 0x38, 0x000c, false);
+
+		// Construct protoline 1. This is a short+short VSYNC line
+	#ifdef SERIAL_DEBUG
+		Serial.println(F("Construct protoline 1"));
+	#endif
+		w = PROTOLINE_WORD_ADDRESS(1);
+		for (i=0; i<=COLORCLKS_PER_LINE; i++) {
+			SPIWriteWord (channel, (u_int16)w++, BLANK_LEVEL, false);
+		}
+		w = PROTOLINE_WORD_ADDRESS(1);
+		for (i=0; i<SHORTSYNC; i++) SPIWriteWord (channel, (u_int16)w++,SYNC_LEVEL, false); // Short sync at the beginning of line
+		w = PROTOLINE_WORD_ADDRESS(1)+COLORCLKS_LINE_HALF;
+		for (i=0; i<SHORTSYNCM; i++) SPIWriteWord (channel, (u_int16)w++,SYNC_LEVEL,false); // Short sync at the middle of line
+
+		// Construct protoline 2. This is a long+long VSYNC line
+	#ifdef SERIAL_DEBUG
+		Serial.println(F("Construct protoline 2"));
+	#endif
+		w = PROTOLINE_WORD_ADDRESS(2);
+		for (i=0; i<=COLORCLKS_PER_LINE; i++) {
+			SPIWriteWord (channel, (u_int16)w++, BLANK_LEVEL, false);
+		}
+		w = PROTOLINE_WORD_ADDRESS(2);
+		for (i=0; i<LONGSYNC; i++) SPIWriteWord (channel, (u_int16)w++,SYNC_LEVEL, false); // Long sync at the beginning of line
+		w = PROTOLINE_WORD_ADDRESS(2)+COLORCLKS_LINE_HALF;
+		for (i=0; i<LONGSYNCM; i++) SPIWriteWord (channel, (u_int16)w++,SYNC_LEVEL, false); // Long sync at the middle of line
+
+		// Construct protoline 3. This is a long+short VSYNC line
+	#ifdef SERIAL_DEBUG
+		Serial.println(F("Construct protoline 3"));
+	#endif
+		w = PROTOLINE_WORD_ADDRESS(3);
+		for (i=0; i<=COLORCLKS_PER_LINE; i++) {
+			SPIWriteWord (channel, (u_int16)w++, BLANK_LEVEL, false);
+		}
+		w = PROTOLINE_WORD_ADDRESS(3);
+		for (i=0; i<LONGSYNC; i++) SPIWriteWord (channel, (u_int16)w++,SYNC_LEVEL, false); // Short sync at the beginning of line
+		w = PROTOLINE_WORD_ADDRESS(3)+COLORCLKS_LINE_HALF;
+		for (i=0; i<SHORTSYNCM; i++) SPIWriteWord (channel, (u_int16)w++,SYNC_LEVEL, false); // Long sync at the middle of line	
+
+		// Set first lines of frame to point to PAL sync lines
+		// Here the frame starts, lines 1 and 2
+	#ifdef SERIAL_DEBUG
+		Serial.println(F("1st lines point to PAL sync lines"));
+	#endif
+		// frame starts, lines 1 and 2
+		for (i=0; i<2; i++) {
+			SPIWriteByte (channel, INDEX_START_BYTES + i*3, 0x00, false);
+			SPIWriteByte (channel, INDEX_START_BYTES + i*3 + 1, PROTOLINE_WORD_ADDRESS(2), false);
+			SPIWriteByte (channel, INDEX_START_BYTES + i*3 + 2, PROTOLINE_WORD_ADDRESS(2)>>8, false);
+		}
+		// Line 3
+		SPIWriteByte (channel, INDEX_START_BYTES + 2*3, 0x00, false);
+		SPIWriteByte (channel, INDEX_START_BYTES + 2*3 + 1, PROTOLINE_WORD_ADDRESS(3), false);
+		SPIWriteByte (channel, INDEX_START_BYTES + 2*3 + 2, PROTOLINE_WORD_ADDRESS(3)>>8, false);
+		// Lines 4 and 5
+		for (i=3; i<5; i++) {
+			SPIWriteByte (channel, INDEX_START_BYTES + i*3, 0x00, false);
+			SPIWriteByte (channel, INDEX_START_BYTES + i*3 + 1, PROTOLINE_WORD_ADDRESS(1), false);
+			SPIWriteByte (channel, INDEX_START_BYTES + i*3 + 2, PROTOLINE_WORD_ADDRESS(1)>>8, false);
+		}
+		// These are three last lines of the frame, lines 310-312
+		for (i=TOTAL_LINES-3; i<TOTAL_LINES; i++) {
+			SPIWriteByte (channel, INDEX_START_BYTES + i*3, 0x00, false);
+			SPIWriteByte (channel, INDEX_START_BYTES + i*3 + 1, PROTOLINE_WORD_ADDRESS(1), false);
+			SPIWriteByte (channel, INDEX_START_BYTES + i*3 + 2, PROTOLINE_WORD_ADDRESS(1)>>8, false);
+		}
+	
+
+		// Set pic line indexes to point to protoline 0 and their individual picture line.
+	#ifdef SERIAL_DEBUG
+		Serial.println(F("Pic line index to protoline 0"));
+	#endif
+		for (i=0; i<ENDLINE-STARTLINE; i++) { 
+			SPIWriteByte (channel, INDEX_START_BYTES + (i + STARTLINE)*3,     ((PICLINE_BYTE_ADDRESS(i) << 7) & 0x80) |(0 &0xf), false);
+			SPIWriteByte (channel, INDEX_START_BYTES + (i + STARTLINE)*3 + 1,  (PICLINE_BYTE_ADDRESS(i) >> 1), false);
+			SPIWriteByte (channel, INDEX_START_BYTES + (i + STARTLINE)*3 + 2,  (PICLINE_BYTE_ADDRESS(i) >> 9), false);
+		}
+		// Enable Video Display Controller, set video mode to PAL, set program length and linecount.
+		SPIWriteRegister16 (WriteVideoDisplayControl2, Enable_Video | PAL | Program_Length | LineCount, false );
+
+		// Fixes the picture to proto area border artifacts when BEXTRA > 0.
+		if (BEXTRA>0) {
+			for (i=0; i<ENDLINE-STARTLINE; i++) {
+				if (i%4==PICX%4) {
+					for (j=0; j<BEXTRA;j++) {
+						if (j%2==1){
+							SPIWriteByte (channel, PICLINE_BYTE_ADDRESS(i)+PICLINE_LENGTH_BYTES+j,0xc4, false); // V and U of the first proto pixel after picture.
+						} else {
+							SPIWriteByte (channel, PICLINE_BYTE_ADDRESS(i)+PICLINE_LENGTH_BYTES+j,0xcf, false); // Y of the first proto pixel after picture.
+						}
+					}
+				}
+			}
+		}
+#endif // PAL500x240
+
 	}
 	else {
 	#ifdef SERIAL_DEBUG

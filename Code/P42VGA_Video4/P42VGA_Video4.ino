@@ -27,6 +27,18 @@ void setup() {
 	Serial.begin(115200);
 	Serial.println("");
 	Serial.println(F("P42 VGA Shield Test - Composite Output"));
+#ifdef NTSC320x200 
+		Serial.println(F("Resolution: NTSC 320x200 8bit"));
+#endif
+#ifdef NTSC426x200 
+		Serial.println(F("Resolution: NTSC 426x200 8bit"));
+#endif
+#ifdef PAL300x240 
+		Serial.println(F("Resolution: PAL 300x240 8bit"));
+#endif
+#ifdef PAL500x240 
+		Serial.println(F("Resolution: PAL 500x240 8bit"));
+#endif
 
 	// Config pins
 	pinMode(nWPPin, OUTPUT);
@@ -55,6 +67,34 @@ void setup() {
 	P42_Display_ID = P42Display.Config( CH1 );
 	P42_Display_ID = P42Display.Config( CH2 );
 	P42_Display_ID = P42Display.Config( CH3 );
+
+}
+
+// Draw a Apfelmaennchen
+void Mandelbrot (byte channel, float Xn, float Xp, float Yn, float Yp){
+	float x0, y0, xtemp;
+	float x = 0;
+	float y = 0;
+	u_int16 Px, Py;
+	u_int16 iteration = 0;
+	u_int16 max_iteration = 256;
+	
+	for (Py = 0; Py < YPIXELS; Py++){
+		y0 = (Yp - Yn)/YPIXELS*Py + Yn;
+		for (Px = 0; Px < XPIXELS; Px++){
+			x0 = (Xp - Xn)/XPIXELS*Px + Xn;
+			x = 0;
+			y = 0;
+			iteration = 0;
+			while ((x*x + y*y <= 2*2) && (iteration < max_iteration) ) {
+				xtemp = x*x - y*y + x0;
+				y = 2*x*y + y0;
+				x = xtemp;
+				iteration++;
+			}
+			P42Display.SetYUVPixel (channel, Px, Py, (byte) (iteration&0xff) +0x20);
+		}
+	}
 
 }
 
@@ -96,13 +136,13 @@ void loop() {
 	// Test GPIO 
 	Serial.println(F("Test GPIO#4 - set high during clear screen operation") );
 	P42Display.SPIWriteRegister( WriteGPIOControl, PIO4Dir | PIO4High, false  );
-	P42Display.ClearScreen ( CH0, 0x00 );
+	P42Display.ClearScreen ( CH0, 0x41 );
 	P42Display.ClearScreen ( CH1, 0x00 );
 	P42Display.ClearScreen ( CH2, 0x00 );
 	P42Display.ClearScreen ( CH3, 0x00 );
 	P42Display.SPIWriteRegister( WriteGPIOControl, 0x00, false );
 
-
+	
 	// Draw  colour map test image
 	Serial.println("Draw colour map test image");
 
@@ -126,7 +166,7 @@ void loop() {
 		P42Display.FilledRectangle( CH3, (i*XSIZEREC)+(XSIZEREC-1), (j*YSIZEREC),              (i*XSIZEREC)+(XSIZEREC-1), (j*YSIZEREC)+(YSIZEREC-1), 0);			// Draw black vertical line
 
 		P42Display.PrintString ( CH0, "Status and Progress on Serial Monitor", 0, 0, 0x13);
-		P42Display.PrintString ( CH0, "112500 8N1.", 0, 8, 0x13);
+		P42Display.PrintString ( CH0, "115200 8N1.", 0, 8, 0x13);
 
 	}
 
@@ -147,6 +187,18 @@ void loop() {
 	P42Display.ClearScreen ( CH1, 0x00 );
 	P42Display.ClearScreen ( CH2, 0x00 );
 	P42Display.ClearScreen ( CH3, 0x00 );
+	
+	u_int32 start_time = 0;
+	u_int32 current_time = 0;
+	
+	start_time = millis();
+	
+	Mandelbrot ( CH0, -2.5, 1, -1, 1);
+
+	current_time = millis();
+	
+	Serial.print (F("Mandelbrot duration [msec]"));
+	Serial.println ( current_time - start_time );
 
 	// colour bars
 	Serial.println(F("4 RGB Colour Bars (experimental) [press key]"));
@@ -315,12 +367,15 @@ void loop() {
 //		}
 //	}
 
+
+
+#ifndef PAL500x240
+// This resulution does not leave enough video RAM to put the ball frames there and use the block_move command.
+
+
 	// Amiga Style Boing Ball demo
 	Serial.println(F("BoingBall [press key]") );
-//	while (Serial.available() == 0) {};
-//	incomingByte = Serial.read();
-//
-//	
+
 	// BoingBall animation 
 	P42Display.ClearScreen ( CH0, 0x00 );
 	P42Display.ClearScreen ( CH1, 0x00 );
@@ -441,6 +496,7 @@ void loop() {
 		};
 	incomingByte = Serial.read();
 
+#endif
 
 	Serial.println(F("End of test! [Restart press key]"));
 	delay(1);

@@ -10,7 +10,9 @@
 
 // *** Select Video Resolution here ***
 #define NTSC320x200
+//#define NTSC426x200
 //#define PAL300x240
+//#define PAL500x240
 
 // *** Select Platform here ***
 #define ArduinoShield
@@ -22,8 +24,14 @@
 #ifdef NTSC320x200
 	#include "ntsc320x200.h"
 #endif
+#ifdef NTSC426x200
+	#include "ntsc426x200.h"
+#endif
 #ifdef PAL300x240
 	#include "pal300x240.h"
+#endif
+#ifdef PAL500x240
+	#include "pal500x240.h"
 #endif
 
 #define u_int32 unsigned long
