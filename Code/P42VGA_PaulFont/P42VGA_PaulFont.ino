@@ -13,6 +13,7 @@
 
 #include <Arduino.h>
 #include <SPI.h>
+#include <avr/pgmspace.h>
 #include "Paul12x18font.h"
 
 // *** Set Video mode in this header file ***
@@ -45,7 +46,7 @@ P42Display P42Display;
 void PrintPaulChar ( byte channel, char Letter, word x, word y, byte colour ) {
 
 u_int16 bitmap[18];
-byte xp,yp = 0;		// xpixel and ypixel
+u_int16 xp,yp = 0;		// xpixel and ypixel
 u_int32 char_address;
 	
 	switch ( Letter ) {
@@ -83,29 +84,62 @@ u_int32 char_address;
 //		Serial.print(char_address, DEC);
 //		Serial.print(F(" "));
 
-	
-	for (yp = 0; yp < font12x18ext[1]; yp++)		// repeat for all lines of character   
+u_int16 bitmap_line = 0;
+
+	for (yp = y; yp < y+pgm_read_word(&(font12x18ext[1])); yp++)    // repeat for all lines of character  
 	{
+//		Serial.print(F(" yp:"));
+//		Serial.print(yp);
+//		Serial.print(F(" "));
+
+
 //		Serial.print(F(" 0x"));
-//		Serial.print(font12x18ext[char_address], HEX);
-		
-		for (xp = font12x18ext[0]; xp > 0; xp--)
+//	    Serial.print(bitmap_line, HEX);
+		bitmap_line = pgm_read_word(&(font12x18ext[char_address + yp - y]));
+		for (xp = x + pgm_read_word(&(font12x18ext[0])); xp > x; xp--)
 		{
+//			Serial.print(F(" xp:"));
 //			Serial.print(xp);
 	// Add boundary check.
-			if ((x+12-xp < XPIXELS) and (y+yp < YPIXELS) ) {
-				if ((font12x18ext[char_address + yp] >> (xp-1) ) & 0x01 ) {
-					P42Display.SetYUVPixel ( channel, x+12-xp, y+yp, colour);
+			if ((xp < XPIXELS) and (yp < YPIXELS) ) {
+/**/ 			if ((bitmap_line) & 0x01 ) {
+/**/				P42Display.SetYUVPixel ( channel, xp, yp, colour);
 //					Serial.print(F("."));
 				}
 				else {
-					P42Display.SetYUVPixel ( channel, x+12-xp, y+yp, Background);
+/**/				P42Display.SetYUVPixel ( channel, xp, yp, Background);
 //					Serial.print(F("_"));
 				}
 			}
-		}	
+/**/		bitmap_line = bitmap_line >> 1;
+		}
 //		Serial.println();
-	}
+	}	
+
+
+	
+//	for (yp = 0; yp < font12x18ext[1]; yp++)		// repeat for all lines of character   
+//	{
+////		Serial.print(F(" 0x"));
+////		Serial.print(font12x18ext[char_address], HEX);
+//		
+//		for (xp = font12x18ext[0]; xp > 0; xp--)
+//		{
+////			Serial.print(xp);
+//	// Add boundary check.
+//			if ((x+12-xp < XPIXELS) and (y+yp < YPIXELS) ) {
+//				if ((font12x18ext[char_address + yp] >> (xp-1) ) & 0x01 ) {
+//					P42Display.SetYUVPixel ( channel, x+12-xp, y+yp, colour);
+////					Serial.print(F("."));
+//				}
+//				else {
+//					P42Display.SetYUVPixel ( channel, x+12-xp, y+yp, Background);
+////					Serial.print(F("_"));
+//				}
+//			}
+//		}	
+////		Serial.println();
+//	}
 }
 
 
@@ -146,7 +180,7 @@ u_int16 x_loc = 0;
 //			Serial.print (x_loc, DEC);
 //			Serial.print (F('<'));
 			PrintPaulChar (channel, Text[i], x_loc, y, colour);
-			x_loc = x_loc + font12x18ext[0];
+			x_loc = x_loc + pgm_read_word(&(font12x18ext[0]));
 		}
 		i++;
 	}
@@ -256,10 +290,14 @@ void loop() {
 
 	Serial.println();
 	
-	PrintPaulString ( CH0, "éöíóñ", 0, 70, 0x0c );
-	PrintPaulString ( CH0, "éöíóñ", 290, 70, 0x0c );
-	PrintPaulString ( CH0, "éöíóñ", 0, 190, 0x0c );
-	PrintPaulString ( CH0, "éöíóñ", 280, 185, 0x0c );
+//	PrintPaulString ( CH0, "éöíóñ", 0, 70, 0x0c );
+//	PrintPaulString ( CH0, "éöíóñ", 290, 70, 0x0c );
+//	PrintPaulString ( CH0, "éöíóñ", 0, 190, 0x0c );
+//	PrintPaulString ( CH0, "éöíóñ", 280, 185, 0x0c );
+	PrintPaulString ( CH0, "12345", 0, 70, 0x0c );
+	PrintPaulString ( CH0, "12345", 290, 70, 0x0c );
+	PrintPaulString ( CH0, "12345", 0, 190, 0x0c );
+	PrintPaulString ( CH0, "12345", 280, 185, 0x0c );
 	
 	Serial.println();
 	
@@ -285,22 +323,26 @@ void loop() {
 	PrintPaulString ( CH0, " !\"#$%&\'()*+,-./0123456789", 0, 40, 0x09 );
 	PrintPaulString ( CH0, ":;<=>?@ABCDEFGHIJKLMNOPQRS", 0, 40+18, 0x0a );
 	PrintPaulString ( CH0, "TUVWXYZ[\\]^_`abcdefghijklm", 0, 40+18*2, 0x0b );
-	PrintPaulString ( CH0, "nopqrstuvwxyzéöíóñ", 0, 40+18*3, 0x0c );
+	PrintPaulString ( CH0, "nopqrstuvwxyz", 0, 40+18*3, 0x0c );
+//	PrintPaulString ( CH0, "nopqrstuvwxyzéöíóñ", 0, 40+18*3, 0x0c );
 
 	PrintPaulString ( CH1, " !\"#$%&\'()*+,-./0123456789", 0, 40, 0x19 );
 	PrintPaulString ( CH1, ":;<=>?@ABCDEFGHIJKLMNOPQRS", 0, 40+18, 0x1a );
 	PrintPaulString ( CH1, "TUVWXYZ[\\]^_`abcdefghijklm", 0, 40+18*2, 0x1b );
-	PrintPaulString ( CH1, "nopqrstuvwxyzéöíóñ", 0, 40+18*3, 0x1c );
+	PrintPaulString ( CH0, "nopqrstuvwxyz", 0, 40+18*3, 0x0c );
+//	PrintPaulString ( CH0, "nopqrstuvwxyzéöíóñ", 0, 40+18*3, 0x0c );
 
 	PrintPaulString ( CH2, " !\"#$%&\'()*+,-./0123456789", 0, 40, 0x29 );
 	PrintPaulString ( CH2, ":;<=>?@ABCDEFGHIJKLMNOPQRS", 0, 40+18, 0x2a );
 	PrintPaulString ( CH2, "TUVWXYZ[\\]^_`abcdefghijklm", 0, 40+18*2, 0x2b );
-	PrintPaulString ( CH2, "nopqrstuvwxyzéöíóñ", 0, 40+18*3, 0x0c );
+	PrintPaulString ( CH0, "nopqrstuvwxyz", 0, 40+18*3, 0x0c );
+//	PrintPaulString ( CH0, "nopqrstuvwxyzéöíóñ", 0, 40+18*3, 0x0c );
 
 	PrintPaulString ( CH3, " !\"#$%&\'()*+,-./0123456789", 0, 40, 0x49 );
 	PrintPaulString ( CH3, ":;<=>?@ABCDEFGHIJKLMNOPQRS", 0, 40+18, 0x48 );
 	PrintPaulString ( CH3, "TUVWXYZ[\\]^_`abcdefghijklm", 0, 40+18*2, 0x47 );
-	PrintPaulString ( CH3, "nopqrstuvwxyzéöíóñ", 0, 40+18*3, 0x46 );
+	PrintPaulString ( CH0, "nopqrstuvwxyz", 0, 40+18*3, 0x0c );
+//	PrintPaulString ( CH0, "nopqrstuvwxyzéöíóñ", 0, 40+18*3, 0x0c );
 
 
 	Serial.println(F("End of test! [Restart press key]"));
